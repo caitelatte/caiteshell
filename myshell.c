@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <readline/readline.h>
-#include <readline/history.g>
+#include <readline/history.h>
+#include <stdlib.h>
 
 #define MAX_LENGTH 1024
 #define DELIMITERS " /n/t"
@@ -22,7 +22,9 @@ int main (int argc, char** argv)
 
         //parse line
         if ((cmd = strtok(input, DELIMITERS))) {
+        	// get first part of line, set to cmd.
             printf("%s\n", cmd);
+            
         }
     }
 }
