@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+// #include <readline/readline.h>
+// #include <readline/history.h>
 #include <stdlib.h>
 
 #define MAX_LENGTH 1024
@@ -18,8 +18,10 @@ static void cb_linehandler (char *line)
     // handle exit
     // search for executable
     //  if found: fork and wait for executable
-    //  otherwise: printf("Sorry, \"%s\" couldn't be found in %s, usr/bin/ or /bin/.", cmd, currentPath());
+    //  otherwise: printf("Sorry, \"%s\" couldn't be found in %s, usr/bin/ or /bin/.", cmd, current_path());
 }
+
+static char *current_path () { }
 
 int main (int argc, char** argv)
 {
@@ -29,7 +31,7 @@ int main (int argc, char** argv)
     is_running = 1;
 
     // install 
-    rl_callback_handler_install(PROMPT, cb_linehandler);
+    //rl_callback_handler_install(PROMPT, cb_linehandler);
 
     // infinite loop
     while (is_running) {

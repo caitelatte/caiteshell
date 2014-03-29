@@ -1,2 +1,2 @@
 all: myshell.c
-	gcc myshell.c -Wall -o myshell -lreadline
+	gcc myshell.c -Wall -o myshell
