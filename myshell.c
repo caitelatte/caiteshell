@@ -10,15 +10,23 @@ const char *search_dir[] = { "/bin", "/usr/bin", ""};
 int is_running;
 const char *prompt = "caitec:";
 
-static void cb_linehandler (char *line);
+static void linehandler (char *line);
 static char *current_path ();
 
-static void cb_linehandler (char *line)
+static void linehandler (char *line)
 {
+	//parse line
+    if ((cmd = strtok(input, DELIMITERS))) {
+		// get first part of line, set to cmd.
+		printf("%s\n", cmd);
+		printf("%s\n", input);
+		
+	}
     // handle exit
     // search for executable
     //  if found: fork and wait for executable
-    //  otherwise: printf("Sorry, \"%s\" couldn't be found in %s, usr/bin/ or /bin/.", cmd, current_path());
+    //  otherwise: 
+	printf("Sorry, \"%s\" couldn't be found in %s, usr/bin/ or /bin/.", cmd, current_path());
 }
 
 static char *current_path () { }
@@ -30,21 +38,12 @@ int main (int argc, char** argv)
     char *cmd;
     is_running = 1;
 
-    // install 
-    //rl_callback_handler_install(PROMPT, cb_linehandler);
-
     // infinite loop
     while (is_running) {
+		// take in input
         printf("c: ");
         if (!fgets(input, MAX_LENGTH, stdin)) { break; }
-        // input is now in input
-
-        //parse line
-        if ((cmd = strtok(input, DELIMITERS))) {
-        	// get first part of line, set to cmd.
-            printf("%s\n", cmd);
-            printf("%s\n", input);
-            
-        }
+		
+		linehandler(input);
     }
 }
