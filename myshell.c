@@ -1,49 +1,93 @@
 #include <stdio.h>
-// #include <readline/readline.h>
-// #include <readline/history.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define MAX_LENGTH 1024
-#define DELIMITERS " /n/t|"
+#define MAX_LENGTH 1023
+#define DELIMITERS "\n "
 
 const char *search_dir[] = { "/bin", "/usr/bin", ""};
 int is_running;
 const char *prompt = "caitec:";
 
 static void linehandler (char *line);
-static char *current_path ();
 
+typedef struct {
+	char input_str[MAX_LENGTH];
+	char *cmd;
+	char **argv;
+	int argc;
+}COMMAND;
+
+/* linehandler takes in the raw input line that is entered by the user
+ * and handles 
+ * */
 static void linehandler (char *line)
 {
-	//parse line
-    if ((cmd = strtok(input, DELIMITERS))) {
-		// get first part of line, set to cmd.
-		printf("%s\n", cmd);
-		printf("%s\n", input);
-		
+	COMMAND *input_ptr;
+	input_ptr = malloc(sizeof(COMMAND));
+	char **save_ptr;
+	save_ptr = (char **)malloc(sizeof(char));
+	pid_t pid;
+	if ((input_ptr == 0)||(save_ptr==0)) {
+		// not enough space for input
+		printf("ERROR: not enough memory");
+		exit(EXIT_FAILURE);
 	}
-    // handle exit
-    // search for executable
-    //  if found: fork and wait for executable
-    //  otherwise: 
-	printf("Sorry, \"%s\" couldn't be found in %s, usr/bin/ or /bin/.", cmd, current_path());
+	strcpy(input_ptr->input_str, line);
+	input_ptr->argc=0;
+	input_ptr->argv=calloc(255, sizeof(char*));
+	input_ptr->argv[input_ptr->argc]=input_ptr->input_str;
+	// parse args and add their pointers to input->argv, with first arg being stored in input->cmd
+    if ((input_ptr->argv[input_ptr->argc] = strtok_r(input_ptr->input_str, DELIMITERS, save_ptr))) {
+		// get first part of line, set to cmd.
+		input_ptr->cmd=input_ptr->argv[input_ptr->argc];
+		input_ptr->argc++;
+	}
+	while ((input_ptr->argv[input_ptr->argc] = strtok_r(NULL, DELIMITERS, save_ptr))) {
+		input_ptr->argc++;
+	}
+	free(save_ptr);
+	
+    // handle exit, help, and executing a thing.
+	if (!strcmp(input_ptr->cmd, "exit")) {
+		is_running = 0;
+		printf("Exiting caiteshell. :( See you next time.\n");
+	} else if (!strcmp(input_ptr->cmd, "help")){
+		printf("Hello! Welcome to caiteshell.\nTo exit, enter \"exit\".\nTo run a program that's located within your current\ndirectory, usr/bin or /bin, just enter the program's name.\n");
+	} else {
+		//  if found: fork and wait for executable
+		switch (pid=fork()) {
+			case -1:
+				printf("");
+				exit(EXIT_FAILURE);
+			case 0: // hello i am a child
+				status = execve(input_ptr->cmd, input_ptr->argv, input_ptr->argc);
+				break;
+			default: // ooh we are a parent
+				break;
+		}
+		//  otherwise: 
+		printf("\"%s\" couldn't be found in your current directory, usr/bin/ or /bin/.\n", input_ptr->cmd);
+	}
+	free(input_ptr->argv);
+	free(input_ptr);
 }
-
-static char *current_path () { }
 
 int main (int argc, char** argv)
 {
     // define line handler
-    char input[MAX_LENGTH];
-    char *cmd;
-    is_running = 1;
+    char raw_input[MAX_LENGTH];
+	is_running = 1;
 
     // infinite loop
     while (is_running) {
 		// take in input
         printf("c: ");
-        if (!fgets(input, MAX_LENGTH, stdin)) { break; }
-		
-		linehandler(input);
+        if (!fgets(raw_input, MAX_LENGTH, stdin)) { 
+			is_running = 0; 
+			printf("See ya!");
+		}
+		if (is_running) { linehandler(raw_input); }
     }
+	exit(EXIT_SUCCESS);
 }
