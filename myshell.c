@@ -1,6 +1,14 @@
+/* 
+ * written by Caitlin Macleod
+ * Licensed under GPL version 3
+ * */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAX_LENGTH 1023
 #define DELIMITERS "\n "
@@ -9,7 +17,7 @@ const char *search_dir[] = { "/bin", "/usr/bin", ""};
 int is_running;
 const char *prompt = "caitec:";
 
-static void linehandler (char *line);
+static int linehandler (char *line);
 
 typedef struct {
 	char input_str[MAX_LENGTH];
@@ -21,17 +29,18 @@ typedef struct {
 /* linehandler takes in the raw input line that is entered by the user
  * and handles 
  * */
-static void linehandler (char *line)
+static int linehandler (char *line)
 {
 	COMMAND *input_ptr;
 	input_ptr = malloc(sizeof(COMMAND));
 	char **save_ptr;
 	save_ptr = (char **)malloc(sizeof(char));
-	pid_t pid;
+	int exit_status;
+	
 	if ((input_ptr == 0)||(save_ptr==0)) {
 		// not enough space for input
 		printf("ERROR: not enough memory");
-		exit(EXIT_FAILURE);
+		exit_status = EXIT_FAILURE;
 	}
 	strcpy(input_ptr->input_str, line);
 	input_ptr->argc=0;
@@ -52,25 +61,41 @@ static void linehandler (char *line)
 	if (!strcmp(input_ptr->cmd, "exit")) {
 		is_running = 0;
 		printf("Exiting caiteshell. :( See you next time.\n");
-	} else if (!strcmp(input_ptr->cmd, "help")){
-		printf("Hello! Welcome to caiteshell.\nTo exit, enter \"exit\".\nTo run a program that's located within your current\ndirectory, usr/bin or /bin, just enter the program's name.\n");
+		
+	} else if (!strcmp(input_ptr->cmd, "help")) {
+		printf("Hello! Welcome to caiteshell.\nTo exit, enter \"exit\".\nTo run a program that's located within your current directory,\nusr/bin or /bin, just enter the program's name.\n");
 	} else {
+		pid_t pid;
+		int status;
 		//  if found: fork and wait for executable
 		switch (pid=fork()) {
-			case -1:
-				printf("");
-				exit(EXIT_FAILURE);
+			case -1: // error in the forking :(
+				printf("We had an error starting the process. Please try again.");
+				exit_status = EXIT_FAILURE;
+				break;
 			case 0: // hello i am a child
-				status = execve(input_ptr->cmd, input_ptr->argv, input_ptr->argc);
+				status = execvp(input_ptr->cmd, input_ptr->argv);
+				exit (status);
 				break;
 			default: // ooh we are a parent
+				// wait for thing to finish 
+				if(waitpid(pid, &status, 0) < 0) {
+					printf("We're sorry, there was an error with the process you tried to run.\n");
+					exit_status = EXIT_FAILURE;
+				}
+				// wifexited should return true if the child process exited normally.
+				if (WIFEXITED(status)) { 
+					// 
+					exit_status = WEXITSTATUS(status);
+					break;
+				}
+				exit_status = EXIT_FAILURE;
 				break;
 		}
-		//  otherwise: 
-		printf("\"%s\" couldn't be found in your current directory, usr/bin/ or /bin/.\n", input_ptr->cmd);
 	}
 	free(input_ptr->argv);
 	free(input_ptr);
+	return(exit_status);
 }
 
 int main (int argc, char** argv)
