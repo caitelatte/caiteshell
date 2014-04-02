@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #define MAX_LENGTH 1023
 #define DELIMITERS "\n "
@@ -36,16 +37,18 @@ static int linehandler (char *line)
 	char **save_ptr;
 	save_ptr = (char **)malloc(sizeof(char));
 	int exit_status;
-	
-	if ((input_ptr == 0)||(save_ptr==0)) {
-		// not enough space for input
-		printf("ERROR: not enough memory");
+    input_ptr->argc=0;
+    input_ptr->argv=calloc(255, sizeof(char*));
+	if ((input_ptr == 0)||(save_ptr==0)||(input_ptr->argv==0)) {
+		// not enough space for mallocing these things.
+		printf("ERROR: not enough memory\n");
 		exit_status = EXIT_FAILURE;
 	}
+	
+	// store line in input_ptr->input_str so that I can replace chars with null using strtok while keeping original line.
 	strcpy(input_ptr->input_str, line);
-	input_ptr->argc=0;
-	input_ptr->argv=calloc(255, sizeof(char*));
 	input_ptr->argv[input_ptr->argc]=input_ptr->input_str;
+    
 	// parse args and add their pointers to input->argv, with first arg being stored in input->cmd
     if ((input_ptr->argv[input_ptr->argc] = strtok_r(input_ptr->input_str, DELIMITERS, save_ptr))) {
 		// get first part of line, set to cmd.
@@ -57,20 +60,19 @@ static int linehandler (char *line)
 	}
 	free(save_ptr);
 	
-    // handle exit, help, and executing a thing.
+    // handle "exit", "help", and executing the command.
 	if (!strcmp(input_ptr->cmd, "exit")) {
 		is_running = 0;
 		printf("Exiting caiteshell. :( See you next time.\n");
 		
 	} else if (!strcmp(input_ptr->cmd, "help")) {
-		printf("Hello! Welcome to caiteshell.\nTo exit, enter \"exit\".\nTo run a program that's located within your current directory,\nusr/bin or /bin, just enter the program's name.\n");
+		printf("Hello! Welcome to caiteshell.\nTo exit, enter \"exit\".\nTo run a program that's located within your current directory,\n/usr/bin or /bin, just enter the program's name.\n");
 	} else {
 		pid_t pid;
 		int status;
-		//  if found: fork and wait for executable
 		switch (pid=fork()) {
 			case -1: // error in the forking :(
-				printf("We had an error starting the process. Please try again.");
+				printf("We had an error starting the process. Please try again.\n");
 				exit_status = EXIT_FAILURE;
 				break;
 			case 0: // hello i am a child
@@ -85,7 +87,7 @@ static int linehandler (char *line)
 				}
 				// wifexited should return true if the child process exited normally.
 				if (WIFEXITED(status)) { 
-					// 
+                    printf ("An error occured in the process you specified.\nType and submit \"help\" if you need a hand.\n");
 					exit_status = WEXITSTATUS(status);
 					break;
 				}
@@ -110,7 +112,7 @@ int main (int argc, char** argv)
         printf("c: ");
         if (!fgets(raw_input, MAX_LENGTH, stdin)) { 
 			is_running = 0; 
-			printf("See ya!");
+			printf("See ya!\n");
 		}
 		if (is_running) { linehandler(raw_input); }
     }
