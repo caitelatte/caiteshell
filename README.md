@@ -1,14 +1,10 @@
-#TODO#
+# caiteshell
+by Caitlin Macleod (u5351248@anu.edu.au)
 
-A summary of your programs working.
-The testing you did.
-Optional extensions you did and what makes them deserving of a high mark.
-Limitations or your shell and what you would do next to improve the shell.
-
-#caiteshell, by Caitlin Macleod (u5351248@anu.edu.au)#
-This is a shell program written in C originally created for an assignment for COMP2300, taught by Eric McCreath in semester 1 2014 at ANU.
+This is a basic shell program written in C originally created for an assignment for COMP2300, taught by Eric McCreath in semester 1 2014 at ANU.
 
 Copyright 2014 Caitlin Macleod
+
 Licensed under GPL version 3 - see LICENSE.txt
 
 ##Features##
